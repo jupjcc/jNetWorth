@@ -1,0 +1,2 @@
+# jNetWorth
+Chart Empower data
