@@ -43,7 +43,7 @@ public class AcctSelection extends Composite {
       setLayout(gridLayout);
       name = acctName;
       amtIndex = acctIndex;
-      selected = Tracker.Settings.AccountWasSelected(name);
+      selected = Tracker.Settings.SavedAccountSelection(name);
       if (selected) {
          ChartSelections.SelectToChart(thisInstance, true);
       }
@@ -79,7 +79,7 @@ public class AcctSelection extends Composite {
    }
    
    public boolean IsSelected() {
-      return selected;
+      return btnSelected.getSelection();
    }
    public void SetSelection(boolean sel) {
       btnSelected.setSelection(sel);

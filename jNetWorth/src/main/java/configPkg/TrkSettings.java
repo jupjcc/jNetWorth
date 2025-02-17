@@ -4,12 +4,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 
 import mainPkg.Tracker;
@@ -17,18 +17,13 @@ import utilsPkg.OpMsgLogger;
 import utilsPkg.Utils;
 
 public class TrkSettings {
-   public static String DefaultRuntimeFolder;
+   public static String DefaultRuntimeFolder = "c:\\jNetWorth\\bin\\";
    public static String DATA_FOLDER = Tracker.BASE_PATH + "data\\";
    static String settingsFileName;
-   public String []accountsSelected = null;
-   //  the following are populated by jsontoGson
-//   public String TrackExcelFileName = DATA_FOLDER + "jNetWorth.x";
+   public String []savedAccountsSelected = null;
    public String TrackExcelFileName = DATA_FOLDER + "none";
-//   public String RefDateStr = "";
+   public String acctsListFileName = Tracker.CFG_PATH + "volatileInvestments.accts";
    public String DateRangeStartStr = "";
-//   public String DateRangeEndStr = "";
-//   public float StopWatchSec = 0;
-   public JsonObject AcctsSelGson = null;
    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    
    private static OpMsgLogger st;
@@ -38,7 +33,22 @@ public class TrkSettings {
 //      String os = System.getProperty("os.name");
 //      DefaultRuntimeFolder = os.toLowerCase().contains("win")?
 //              "c:\\InvTrack\\bin" : "/jtrack/runtime/bin";
-      DefaultRuntimeFolder = "c:\\jNetWorth\\bin\\";
+   }
+   
+   // init to selection status from last session
+   public boolean SavedAccountSelection(String name) {
+      if (instance.savedAccountsSelected != null) {
+         int nSaved = instance.savedAccountsSelected.length;
+         if (nSaved > 0) {
+            for (int sel = 0; sel < nSaved; sel++) {
+               String sName = instance.savedAccountsSelected[sel]; 
+               if (name.equals(sName)) {
+                  return true;
+               }
+            }
+         }
+      }
+      return false;
    }
    
    public TrkSettings GetInstance(OpMsgLogger s)
@@ -46,31 +56,11 @@ public class TrkSettings {
       st = s;
       try {
          readJsonObjectFromFile();
-         if (instance.AcctsSelGson != null) {
-            JsonArray accts = instance.AcctsSelGson.getAsJsonArray("selected_accounts");
-            instance.accountsSelected = new String[accts.size()];
-            for (int a = 0; a < instance.accountsSelected.length; a++) {
-               instance.accountsSelected[a] = accts.get(a).toString();
-            }
-         }
       } catch (Exception re) {
          s.LogMsg("Error reading settings, using program defaults\n",
                OpMsgLogger.LogLevel.WARN);
       }
       return instance;
-   }
-   
-   // init to selection status from last session
-   public boolean AccountWasSelected(String name) {
-      if (instance.accountsSelected != null) {
-         String cmp = "\"" + name + "\"";
-         for (int a = 0; a < instance.accountsSelected.length; a++) {
-            if (cmp.equals(instance.accountsSelected[a])) {
-               return true;
-            }
-         }
-      }
-      return false;
    }
    
    public void readJsonObjectFromFile() throws Exception {
@@ -110,31 +100,25 @@ public class TrkSettings {
       }
    }
    
-//   // remember which accounts were selected & make default next time
-//   public void UpdateAcctsSel() {
-//   }
-   
-   
    public void WriteJsonObject() {
       String jSelStr = "";
       int nSel = 0;
+      ArrayList<String> acctsList = new ArrayList<String>();
       for (int a = 0; a < Tracker.acctSelectors.length; a++) {
          if (Tracker.acctSelectors[a].IsSelected()) {
             if (++nSel == 1) {
                jSelStr = "{\"selected_accounts\" : [ ";
             }
+            acctsList.add(Tracker.acctSelectors[a].name);
             jSelStr += "\"" + Tracker.acctSelectors[a].name + "\" ,";
          }
       }
+      instance.savedAccountsSelected = new String[nSel];
       if (nSel > 0) {
-         int lastCommaPos = jSelStr.lastIndexOf(",");
-         jSelStr = jSelStr.substring(0, lastCommaPos-1) + "]}";
-         Object obj = JsonParser.parseString(jSelStr);
-         AcctsSelGson = (JsonObject)obj;
-      } else {
-         AcctsSelGson = null;
+         for (int s = 0; s < nSel; s++) {
+            instance.savedAccountsSelected[s] = acctsList.get(s);
+         }
       }
-      int bpoint=1;
       Gson gson = new Gson();
       try
       {

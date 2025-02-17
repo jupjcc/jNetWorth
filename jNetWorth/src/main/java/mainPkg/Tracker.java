@@ -69,6 +69,7 @@ import utilsPkg.Utils;
 /*  jNetWorth maintains an excel file containing net worth investments
  *  Input is from the Empower app.
  *  Revisions:
+ *  2025.02.17 let gson handle json saved account selections
  *  2025.01.16 corrected display of negative amounts
  *  2024.12.25 .mthml format changed + ported to Lenovo Win 11
  *  2024.04.15 import Empower dashboard from "Empower - Dashboard.mhtml"
@@ -76,7 +77,7 @@ import utilsPkg.Utils;
  *  2023.12.07 Output text amounts to accounts section of SetupDisplay tab
  */
 public class Tracker extends Shell {
-	public static String PROG_ID = "jNetWorth Java Empower Tracker v20250210";
+	public static String PROG_ID = "jNetWorth Java Empower Tracker v20250217";
 	public static String BASE_PATH = "c:\\jNetWorth\\";
 	public static String CFG_PATH = BASE_PATH + "cfg\\";
 	final static String EMPOWER_IMPORT_FOLDER = BASE_PATH + "data";
@@ -105,7 +106,6 @@ public class Tracker extends Shell {
 	static TextLogger sLog;
 //   private static Text txtCurrentLogFile;
 	public static Display MainDisplay;
-	ArrayList<String> accountNames;
 	ArrayList<String> amounts;
 	static boolean captureOk = false;
 	static boolean xlFileAbort = false;
@@ -619,6 +619,7 @@ public class Tracker extends Shell {
 						CFG_PATH, true);
 				if (fName != null) {
 					try {
+			          Settings.acctsListFileName = fName;
 						File file = new File(fName);
 						PrintWriter pw = new PrintWriter(new FileOutputStream(file));
 						int nSelAccts = ChartSelections.accountsToChart.size();
@@ -661,7 +662,7 @@ public class Tracker extends Shell {
 		btnLoadList.addSelectionListener(new org.eclipse.swt.events.SelectionAdapter() {
 			public void widgetSelected(org.eclipse.swt.events.SelectionEvent e) {
 				String fName = Utils.GetOpenFileName(shlMain, "Account selections list", "accts files(*.accts)",
-						"*.accts", CFG_PATH + "Account Selections\\");
+						"*.accts", Settings.acctsListFileName);
 				if (fName != null) {
 					try {
 						FileReader fr = new FileReader(fName);
